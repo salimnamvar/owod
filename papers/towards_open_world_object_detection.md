@@ -105,7 +105,7 @@
     - But in the real world, you encounter unknown objects.
 - **Two Open-World Challenges**:
     1. 🆘 Detect unknowns at test time and label them as "unknown".
-    2. ♻️ Incrementally learn new classes once labeled data becomes available.
+    2. ♻️ Incrementally learn new classes once labeled data becomes available without forgetting learned classes.
 - **Motivation**:
     - Human curiosity and learning involve noticing what we don’t know and then learning it.
     - Datasets like Pascal VOC and COCO only cover a small subset of the vast real-world object categories.
@@ -116,8 +116,14 @@
     - Detectors treat unknown objects as background.
     - So they can mistakenly classify unknowns as known classes.
     - Existing detectors often make overconfident mistakes.
-
-- Identify unknown instances without forgetting of earlier instances without retraining from scratch.
+- **This Paper's Contribution**:
+    - Proposes the Open World Object Detection (OWOD) problem formally.
+    - **Introduces a new method called ORE, combining**:
+        - 📌 Contrastive clustering
+        - 📦 Unknown-aware proposal network
+        - 🔋 Energy-based unknown detection
+    - Provides new benchmarks and settings for open-world evaluation.
+    - Achieves state-of-the-art results on incremental learning as a side effect.
 
 ## Proposed Solution (ORE)
 
