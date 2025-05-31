@@ -15,3 +15,4 @@
 ## Next Papers to Read
 - Contrastive Clustering, https://arxiv.org/pdf/2009.09687, https://github.com/Yunfan-Li/Contrastive-Clustering
 
+- Faster R-CNN: Towards Real-Time Object Detection with Region Proposal Networks, https://arxiv.org/abs/1506.01497

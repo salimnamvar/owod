@@ -160,12 +160,43 @@
    
 ## Proposed Solution (ORE)
 
-- Initialize Model with Known Classes
-- Region Proposal and Feature Extraction
-    - Region Proposal Network (RPN) 
-- Contrastive Clustering of Latent Features
-- Auto-Labelling Unknown Instances
-- Energy-Based Unknown Identification
+The ORE is built on top of the Faster R-CNN architecture, with three main components that work together to enable open world object detection:
+
+1. **Contrastive Clustering**:
+   - 🔍 Purpose: 
+     - Ensures the latent feature space is structured in a way that:
+       - ✅ Known class features are grouped (clustered) tightly.
+       - 🚫 Features from unknown or different classes are separated.
+   - 📌 How it works:
+     - Applies contrastive learning to the features from the Region of Interest (RoI) head.
+     - This helps the model:
+       - Detect unknowns by seeing they don't match any existing cluster.
+       - Avoid catastrophic forgetting by keeping new class features separated from previously learned ones.
+2. **Auto-Labeling via Region Proposal Network (RPN)**:
+   - 🔍 Purpose:
+     - Automatically identifies unknown object instances in input images without any human labels.
+   - 📌 How it works:
+     - The RPN proposes objectlike regions in an image
+     - If a region does not match any known class, it's pseudo-labeled as "unknown".
+     - These unknown regions are used during training to help the model learn to differentiate between known vs unknown.
+3. **Energy-Based Classification**:
+    - 🔍 Purpose:
+      - Decides whether a detected object belongs to:
+        - ✅ A known class, or
+        - 🚫 Is unknown, based on energy scores.
+    - 📌 How it works:
+      - Uses the concept of Helmholtz Free Energy:
+        - Known instances produce lower energy (high model confidence).
+        - Unknown instances produce higher energy (low confidence).
+   - This head is trained to reject high-energy (unknown) samples during inference.
+
+**🧠 Bonus: Base Detector – Faster R-CNN**
+   - ORE modifies Faster R-CNN because:
+     - It's a two-stage detector, more robust for open set tasks.
+     - It uses:
+       - A shared backbone to extract features.
+       - A Region Proposal Network to propose candidate object locations.
+       - A second stage head to classify and refine the bounding boxes.
 
 ### Contrastive Clustering
 - **Goal**: Improve the **separation of different object classes** in feature space so that unknown objects (not seen during training) can be identified more easily.
