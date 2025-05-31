@@ -124,7 +124,40 @@
         - 🔋 Energy-based unknown detection
     - Provides new benchmarks and settings for open-world evaluation.
     - Achieves state-of-the-art results on incremental learning as a side effect.
-
+- **Related Work**:
+    - **Open Set Classification**:
+        - Limitations: These methods detect unknonws but can't update themselves when new class labels are introduced.
+    - **Open WOrld Classification**:
+        - Limitations: Most approaches are focused on classification, not object detection and often on narrow tasks.
+    - **Open Set Detection**:
+        - Limitations: These models don't learn new classes over time — they just try to reject unknowns.
+- **Open World Object Detection**:
+  - **Formal Setup**:
+    - At any time `t`, the detector knows a set of classes:
+      - `Kt = {1, 2, ..., C}` → these are the knonw object classes.
+    - There are also unknown classes, labeled:
+      - `U = {C+1, C+2, …}` → not seen during training but appear during testing.
+  - **Dataset Structure**:
+    - The dataset at time `t` is `Dt = {Xt, Yt}`, where:
+      - `Xt` = training images: `{I1, I2, ..., IM}`
+      - `Yt` = labels for those images: `Yt = {Y1, ..., YM }`
+    - Each object label `yk` in `Yi = {y1, y2, ..., yK}` is `yk = [lk, xk, yk, wk, hk]` and includes: 
+      - `lk` → class label `lk ∈ Kt` (must be in `Kt`)
+      - `xk, yk` → center of the bounding box
+      - `wk, hk` → width and height of the bounding box
+  - **Model Behavior**:
+    - The model `MC` is trained on `C` known classes.
+    - At test time, it should:
+      - Detect known objects (label `1 to C`)
+      - Detect unknown objects and assign them a special label: `0`
+  - **Incremental Learning Loop**:
+    - When unknown objects are detected:
+        1. A human annotator reviews them and provides new class labels for `n` new classes.
+        2. These `n` new classes are added to the model.
+        3. The model updates itself to form a new model `MC+n`.
+        4. The knowns class set becomes `Kt+1 = Kt + {C+1, ..., C+n}`.
+        5. This process repeats over time.
+   
 ## Proposed Solution (ORE)
 
 - Initialize Model with Known Classes
