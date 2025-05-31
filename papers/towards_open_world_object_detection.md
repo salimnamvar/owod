@@ -172,6 +172,7 @@ The ORE is built on top of the Faster R-CNN architecture, with three main compon
      - This helps the model:
        - Detect unknowns by seeing they don't match any existing cluster.
        - Avoid catastrophic forgetting by keeping new class features separated from previously learned ones.
+  
 2. **Auto-Labeling via Region Proposal Network (RPN)**:
    - 🔍 Purpose:
      - Automatically identifies unknown object instances in input images without any human labels.
@@ -179,6 +180,7 @@ The ORE is built on top of the Faster R-CNN architecture, with three main compon
      - The RPN proposes objectlike regions in an image
      - If a region does not match any known class, it's pseudo-labeled as "unknown".
      - These unknown regions are used during training to help the model learn to differentiate between known vs unknown.
+  
 3. **Energy-Based Classification**:
     - 🔍 Purpose:
       - Decides whether a detected object belongs to:
