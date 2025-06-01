@@ -133,29 +133,29 @@
         - Limitations: These models don't learn new classes over time — they just try to reject unknowns.
 - **Open World Object Detection**:
   - **Formal Setup**:
-    - At any time `t`, the detector knows a set of classes:
-      - `Kt = {1, 2, ..., C}` → these are the knonw object classes.
+    - At any time $t$, the detector knows a set of classes:
+      - $K^t = \{1, 2, \ldots, C\} \subset \mathbb{N}^+$ → these are the knonw object classes.
     - There are also unknown classes, labeled:
-      - `U = {C+1, C+2, …}` → not seen during training but appear during testing.
+      - $U = \{ C + 1, \ldots \}$ → not seen during training but appear during testing.
   - **Dataset Structure**:
-    - The dataset at time `t` is `Dt = {Xt, Yt}`, where:
-      - `Xt` = training images: `{I1, I2, ..., IM}`
-      - `Yt` = labels for those images: `Yt = {Y1, ..., YM }`
-    - Each object label `yk` in `Yi = {y1, y2, ..., yK}` is `yk = [lk, xk, yk, wk, hk]` and includes: 
-      - `lk` → class label `lk ∈ Kt` (must be in `Kt`)
-      - `xk, yk` → center of the bounding box
-      - `wk, hk` → width and height of the bounding box
+    - The dataset at time $t$ is $D^t = \{ X^t, Y^t \}$, where:
+      - $X^t$ = training images: $X^t = \{ I_1, \ldots, I_M \}$
+      - $Y^t$ = labels for those images: $Y^t = \{ Y_1, \ldots, Y_M \}$
+    - Each object label $y_k$ in $Y_i = \{ y_1, y_2, \ldots, y_K \}$ is $y_k = [l_k, x_k, y_k, w_k, h_k]$ and includes: 
+      - $l_k$ → class label $l_k \in K^t$ (must be in $K^t$)
+      - $x_k, y_k$ → center of the bounding box
+      - $w_k, h_k$ → width and height of the bounding box
   - **Model Behavior**:
-    - The model `MC` is trained on `C` known classes.
+    - The model $M_C$ is trained on $C$ known classes.
     - At test time, it should:
-      - Detect known objects (label `1 to C`)
-      - Detect unknown objects and assign them a special label: `0`
+      - Detect known objects (label $1 \ldots C$)
+      - Detect unknown objects and assign them a special label: $0$
   - **Incremental Learning Loop**:
     - When unknown objects are detected:
-        1. A human annotator reviews them and provides new class labels for `n` new classes.
-        2. These `n` new classes are added to the model.
-        3. The model updates itself to form a new model `MC+n`.
-        4. The knowns class set becomes `Kt+1 = Kt + {C+1, ..., C+n}`.
+        1. A human annotator reviews them and provides new class labels for $n$ new classes.
+        2. These $n$ new classes are added to the model.
+        3. The model updates itself to form a new model $M_{C+n}$.
+        4. The knowns class set becomes $K^{t+1} = K^t + \{C + 1, \ldots, C + n\}$.
         5. This process repeats over time.
    
 ## Proposed Solution (ORE)
@@ -201,18 +201,35 @@ The ORE is built on top of the Faster R-CNN architecture, with three main compon
        - A second stage head to classify and refine the bounding boxes.
 
 ### Contrastive Clustering
-- **Goal**: Improve the **separation of different object classes** in feature space so that unknown objects (not seen during training) can be identified more easily.
-- **How?** By using a **contrastive clustering** loss:
-    - Pull features of the **same class** close together.
-    - Push features of **different classes** far apart.
-- **Each class has a `prototype vector (p_i)`**:
-    - This represents the average position (mean) of that class in the feature space.
-    - These prototypes are **updated gradually** as the network trains.
-- **Loss Function (`L_cont`)**:
-    - Encourages features to move **closer to the correct class prototype**.
-    - Encourages features to be **far from prototypes of other classes**.
-- **Feature Queue**:
-    - Keeps a limited **rolling memory** of past features for each class to calculate updated prototypes over time.
-- **Training Logic**:
-    - The clustering loss is only calculated **after a “burn-in” period** so early noisy features don’t confuse the system.
-    - Prototypes are updated **every few steps** using a **momentum-based update**.
+- **Goal of Contrastive Clustering (CC)**:
+  - The core idea is to ensure that the latent (hidden) feature space of the neural network:
+    - Pulls same-class object features closer together.
+    - Pushes different-class object features further apart.
+  - This clear separation helps the model:
+    - Detect unknown/novel instances (because they won't fit into any known cluster).
+    - Learn new classes incrementally without forgetting older ones.
+- **Class Prototype**:
+  - For each known class $i \in K^t$, ORE maintains a prototype vector $p_i$:
+    - This is essentially the average feature representation of all objects from that class.
+  - As the model trains and learns, the feature change, so prototypes must evolve too.
+- **Contrastive Loss Function**:
+  - The model computes a contrastive loss, defined as:
+    $$
+        L_{cont}(f_c) = \sum_{i=0}^{C} \ell(f_c, p_i)
+    $$
+
+    where:
+
+    $$
+        \ell(f_c, p_i) =
+        \begin{cases}
+        D(f_c, p_i), & \text{if } i = c \ (\text{same class}) \\
+        \max(0, \Delta - D(f_c, p_i)), & \text{if } i \ne c \ (\text{different class})
+        \end{cases}
+    $$
+
+    $D$ is a distance function (e.g., Euclidean), and $\Delta$ is a margin to control separation.
+
+    This loss encourages:
+      - Small distance for same-class features.
+      - Large distance for different-class features.
