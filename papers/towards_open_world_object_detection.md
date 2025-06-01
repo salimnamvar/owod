@@ -233,3 +233,22 @@ The ORE is built on top of the Faster R-CNN architecture, with three main compon
     This loss encourages:
       - Small distance for same-class features.
       - Large distance for different-class features.
+- **Feature Store with Queues**:
+  - To manage class prototypes efficiently:
+    - A queue $q_i$ is maintained for each class, storing recent feature vectors.
+    - Together, these queues form the feature store:
+        $$
+        F_{\text{store}} = \{ q_0, q_1, \ldots, q_C \}
+        $$
+    - This is scalable, since it stores at most $C \times Q$ vectors, where $Q$ is the queue size.
+- **Prototype Update Algorithm (Momentum-based)**:
+    - Burn-in period ($I_b$): Clustering starts after a few iterations, so feature embeddings stabilize.
+    - Updating Prototypes:
+      - Every $I_p$ iterations:
+        - New prototypes $P_{\text{new}}$ are calculated.
+        - Prototypes are updated using a momentum update:
+            $$
+            P \leftarrow \eta P + (1 - \eta) P_{\text{new}}
+            $$
+        - This prevents sudden changes, allowing gradual learning.
+    - The contrastive loss is combined with standard detection loss and backpropagated to train the entire model.
