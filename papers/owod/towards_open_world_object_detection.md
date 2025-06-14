@@ -200,7 +200,7 @@ The ORE is built on top of the Faster R-CNN architecture, with three main compon
        - A Region Proposal Network to propose candidate object locations.
        - A second stage head to classify and refine the bounding boxes.
 
-### Contrastive Clustering
+### Contrastive Clustering (CC)
 - **Goal of Contrastive Clustering (CC)**:
   - The core idea is to ensure that the latent (hidden) feature space of the neural network:
     - Pulls same-class object features closer together.
@@ -252,3 +252,28 @@ The ORE is built on top of the Faster R-CNN architecture, with three main compon
             $$
         - This prevents sudden changes, allowing gradual learning.
     - The contrastive loss is combined with standard detection loss and backpropagated to train the entire model.
+
+### Auto-Labelling Unknowns with RPN (ALU)
+- **Problem: Need Labels for Unknowns**:
+  - To use contrastive clustering, the model needs to compare input features ($f_c$) against prototypes, including for the unknown class (labeled as $0$).
+  - But real datasets don't label unknown objects, because:
+    - It's impractical to manually re-label all images.
+    - Annotating every unknown object is too time-consuming and expensive.
+- **Solution: Auto-labelling via RPN (Region Proposal Network)**:
+  - RPN is class-agnostic: it generates region proposals (bounding boxes) without caring which class the object belongs to.
+  - For each image, RPN outputs:
+    - Boxes likely to contain foreground objects.
+    - An objectness score indicating how confident it is that the region has an object (not just background).
+- **Pseudo-labelling Unknowns**:
+  - They use a simple yet effective heuristic:
+    1. Get region proposals from RPN.
+    2. Filter proposals that:
+       1. Have high objectness scores (i.e., likely to be objects).
+       2. Do not overlap with any ground truth box (i.e., not known objects).
+    3. Select the top-k such proposals.
+    4. Label them as unknown class (label $0$).
+   - This way, the model automatically identifies potential unknowns and feeds them into contrastive clustering for learning.
+ - **Why It Works**:
+   - This simple heuristic gives surprisingly good performance.
+   - It enables the model to learn about unknowns without any manual labeling.
+
